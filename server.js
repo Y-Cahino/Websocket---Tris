@@ -1,7 +1,12 @@
 const WebSocket = require('ws');
-
+const mysql = require("mysql2");
 const wss = new WebSocket.Server({ port: 8080 });
-
+const db= mysql.createConnection({
+    host: "localhost",
+    user: 'user',
+    password: '',
+    database: 'tris_db'
+});
 let lobbies = {}; // Ogni lobby è una chiave con un array di giocatori e stato del gioco
 
 wss.on('connection', (ws) => {
@@ -25,14 +30,13 @@ wss.on('connection', (ws) => {
                                 ws.send(JSON.stringify({ type: 'error', message: 'Lobby already exists' }));
                             }
                             break;
-                        case 'search_lobby':
-                            if (lobbiues[data.lobby]) {
-                                ws.send(JSON.stringify({
-                                            type: 'searchLobbies',
-                                            lobby: data.lobby,
-
-                                        )
-                                    }
+                        case 'search_lobby';
+                            db.QUERY('SELECT FROM lobbies WHERE nome = ?', [data.lobby], (err, results) => {
+                                if(err){
+                                    ws.send(JSON,stringify({type; 'error', message: 'Database Error'}));
+                                } else if(results.length > 0)
+                            })            
+                                    break;
                                     case 'join_lobby':
                                         if (lobbies[data.lobby] && lobbies[data.lobby].players.length < 2) {
                                             ws.playerSymbol = 'O';
@@ -73,6 +77,7 @@ wss.on('connection', (ws) => {
                                             }
                                         }
                                         break;
+                                        
                                 }
                             } catch (error) {
                                 ws.send(JSON.stringify({ type: 'error', message: 'Invalid JSON' }));
@@ -88,7 +93,8 @@ wss.on('connection', (ws) => {
                         });
                     }
                 }
-
+                //Database per functions
+                
                 ws.on('close', () => {
                     if (ws.lobby && lobbies[ws.lobby]) {
                         lobbies[ws.lobby].players = lobbies[ws.lobby].players.filter(player => player !== ws);
